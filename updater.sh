@@ -76,7 +76,7 @@ cat << "EOF"
 
 Updater v1.2
 Author: C0defire
-For updates run command: wget https://raw.githubusercontent.com/javierfaustino/Shell-Scripts/master/updater.sh
+For updates run command: wget https://raw.githubusercontent.com/c0defire/Updater/master/updater.sh
 
 
 EOF
