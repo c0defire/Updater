@@ -116,42 +116,7 @@ percentage 100
 }
 
 # ubuntu - If system is ubuntu then it performs the following instructions
-function ubuntu() {
-
-echo "Cleaning: $os"
-sudo apt clean
-sleep 1
-echo
-percentage 20
-
-echo "Updating: $os"
-sudo apt update -y
-sleep 1
-echo
-percentage 40
-
-echo "Upgrading: $os"
-sudo apt upgrade -y
-sleep 1
-echo
-percentage 60
-
-echo "Dist-Upgrading: $os"
-sudo apt dist-upgrade -y
-sleep 1
-echo
-percentage 80
-
-echo "Auto removing unwanted programs: $os"
-sudo apt autoremove -y
-echo
-
-percentage 100
-sleep 1
-}
-
-# raspbian - If system is ubuntu then it performs the following instructions
-function raspbian() {
+function debian() {
 
 echo "Cleaning: $os"
 sudo apt clean
@@ -200,23 +165,32 @@ banner
 if [ "$UNAME" == "linux" ]
 then
 # If available, use LSB to identify distribution
-    export DISTRO=$(lsb_release -i | cut -d: -f2 | sed s/'^\t'//)
-       # Otherwise, use release info file
-       if [ "$DISTRO" == "CentOS" ]
-       then
-          redhat # Runs the redhat function
-       fi
+export DISTRO=$(lsb_release -i | cut -d: -f2 | sed s/'^\t'//)
+    # Otherwise, use release info file
+    if [ "$DISTRO" == "CentOS" ]
+    then
+        redhat # Runs the redhat function
+    fi
 
-       if [ "$DISTRO" == "Ubuntu" ]
-       then
-          ubuntu # Runs the ubuntu function
-       fi
+    if [ "$DISTRO" == "Ubuntu" ]
+    then
+        debian # Runs the debian function
+    fi
 
-	if [ "$DISTRO" == "Kali" ]
+    if [ "$DISTRO" == "Kali" ]
 	then
-	ubuntu # Runs the ubuntu function
+	    debian # Runs the debian function
 	fi
 
+    if [ "$DISTRO" == "Parrot" ]
+    then
+        debian # Runs the debian function
+    fi
+
+    if [ "$DISTRO" == "Raspbian" ]
+    then
+        debian # Runs the debian function
+    fi
 fi
 # Below if-statement to be used by newer OS
 if [ "$UNAME" == "linux" ]
@@ -227,7 +201,7 @@ then
        export DISTRO=$(lsb_release -i | cut -d: -f2 | sed s/'^\t'//)
 	if [ "$DISTRO" == "Raspbian" ]
 	then
-	  raspbian # Runs the raspbian function
+	    debian # Runs the raspbian function
         fi
     fi
 fi
