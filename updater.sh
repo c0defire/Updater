@@ -86,7 +86,7 @@ EOF
 function percentage()
 {
     echo "================================================"
-    echo "=                $*% COMPLETE                  ="
+    echo "                 $*% COMPLETE                   "
     echo "================================================"
 }
 
@@ -116,38 +116,31 @@ percentage 100
 }
 
 # ubuntu - If system is ubuntu then it performs the following instructions
-function debian() {
-
-echo "Cleaning: $os"
-sudo apt clean
-sleep 1
-echo
-percentage 20
+function debian(){
 
 echo "Updating: $os"
 sudo apt update -y
 sleep 1
 echo
-percentage 40
+percentage 25
 
 echo "Upgrading: $os"
 sudo apt upgrade -y
 sleep 1
 echo
-percentage 60
+percentage 50
 
 echo "Dist-Upgrading: $os"
 sudo apt dist-upgrade -y
 sleep 1
 echo
-percentage 80
+percentage 75
 
-echo "Auto removing unwanted programs: $os"
+echo "Removing uninstalled applications: $os"
 sudo apt autoremove -y
-echo
-
-percentage 100
 sleep 1
+echo
+percentage 100
 }
 
 #
@@ -174,23 +167,24 @@ export DISTRO=$(lsb_release -i | cut -d: -f2 | sed s/'^\t'//)
 
     if [ "$DISTRO" == "Ubuntu" ]
     then
-        debian # Runs the debian function
+	debian # Runs the debian function
     fi
 
     if [ "$DISTRO" == "Kali" ]
-	then
-	    debian # Runs the debian function
-	fi
+     then
+	debian # Runs the debian function
+    fi
 
     if [ "$DISTRO" == "Parrot" ]
     then
-        debian # Runs the debian function
+	debian # Runs the debian function
     fi
 
     if [ "$DISTRO" == "Raspbian" ]
     then
         debian # Runs the debian function
     fi
+    exit
 fi
 # Below if-statement to be used by newer OS
 if [ "$UNAME" == "linux" ]
