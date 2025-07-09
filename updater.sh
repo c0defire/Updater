@@ -1,45 +1,14 @@
-#! /bin/bash
-# ----------------------- DESCRIPTIVE INFORMATION ---------------------------------
-#
-# Updates your system.
-#
-# ----------------------- DESCRIPTIVE INFORMATION ---------------------------------
-#
-# -------------------------- DECLARED VARIABLES -----------------------------------
-#
-#
-# -------------------------- DECLARED VARIABLES -----------------------------------
-#
-#
-os=$(uname -r)  # Name of system
+#!/bin/bash
+set -euo pipefail
 
-# Determine OS platform
-UNAME=$(uname | tr "[:upper:]" "[:lower:]")
-
-############################################
-# Notes:                                   #
-#                                          #
-# Black        0;30     Dark Gray     1;30 #
-# Red          0;31     Light Red     1;31 #
-# Green        0;32     Light Green   1;32 #
-# Brown/Orange 0;33     Yellow        1;33 #
-# Blue         0;34     Light Blue    1;34 #
-# Purple       0;35     Light Purple  1;35 #
-# Cyan         0;36     Light Cyan    1;36 #
-# Light Gray   0;37     White         1;37 #
-#                                          #
-############################################
-
-#
-# -------------------------------- FUNCTIONS --------------------------------------
-#
-
-# banner - Alias art
-function banner()
-{
+# ----------------------- VARIABLES -----------------------
+os=$(uname -r)
+UNAME=$(uname | tr '[:upper:]' '[:lower:]')
 GREEN='\033[0;32m'
-NC='\033[0m' # No color
+NC='\033[0m'
 
+# ----------------------- FUNCTIONS -----------------------
+banner() {
 cat << "EOF"
 
                                  /h`
@@ -74,132 +43,87 @@ cat << "EOF"
 #    # #      #    # #    #   #   #      #   #
  ####  #      #####  #    #   #   ###### #    #
 
-Updater v1.2
+Updater v1.3
 Author: C0defire
-For updates run command: wget https://raw.githubusercontent.com/c0defire/Updater/master/updater.sh
-
+For updates run: wget https://raw.githubusercontent.com/c0defire/Updater/master/updater.sh
 
 EOF
 }
 
-# percentage - Shows percentage at process
-function percentage()
-{
-    echo "================================================"
-    echo "                 $*% COMPLETE                   "
-    echo "================================================"
+progress_bar() {
+    local progress=$1
+    local total=100
+    local width=40
+    local filled=$((progress*width/total))
+    local empty=$((width-filled))
+    printf "\r["
+    printf "%0.s#" $(seq 1 $filled)
+    printf "%0.s-" $(seq 1 $empty)
+    printf "] %d%%" "$progress"
+    if [[ $progress -eq 100 ]]; then
+        echo -e " ${GREEN}✅ Done!${NC}"
+    fi
 }
 
-# redhat - If system is RedHat then it performs the following instructions
-function redhat() {
+redhat() {
+    echo -e "\nUpdating: $os"
+    sudo yum update -y
+    progress_bar 30
+    sleep 1
 
-percentage 30
+    echo -e "\nUpgrading: $os"
+    sudo yum upgrade -y
+    progress_bar 60
+    sleep 1
 
-echo "Updating: $os"
-sudo yum update -y
-
-sleep 1
-echo
-percentage 60
-
-echo "Upgrading: $os"
-sudo yum upgrade -y
-sleep 1
-echo
-percentage 90
-
-echo "Removing unnecessary software"
-sudo yum autoremove -y
-sleep 1
-echo
-percentage 100
+    echo -e "\nRemoving unnecessary software"
+    sudo yum autoremove -y
+    progress_bar 100
 }
 
-# ubuntu - If system is ubuntu then it performs the following instructions
-function debian(){
+debian() {
+    echo -e "\nUpdating: $os"
+    sudo apt update -y
+    progress_bar 25
+    sleep 1
 
-echo "Updating: $os"
-sudo apt update -y
-sleep 1
-echo
-percentage 25
+    echo -e "\nUpgrading: $os"
+    sudo apt upgrade -y
+    progress_bar 50
+    sleep 1
 
-echo "Upgrading: $os"
-sudo apt upgrade -y
-sleep 1
-echo
-percentage 50
+    echo -e "\nDist-Upgrading: $os"
+    sudo apt dist-upgrade -y
+    progress_bar 75
+    sleep 1
 
-echo "Dist-Upgrading: $os"
-sudo apt dist-upgrade -y
-sleep 1
-echo
-percentage 75
-
-echo "Removing uninstalled applications: $os"
-sudo apt autoremove -y
-sleep 1
-echo
-percentage 100
+    echo -e "\nRemoving uninstalled applications: $os"
+    sudo apt autoremove -y
+    progress_bar 100
 }
 
-#
-# -------------------------------- FUNCTIONS --------------------------------------
-#
-
-#
-# ------------------------------ INSTRUCTIONS -------------------------------------
-#
+# ----------------------- MAIN -----------------------
 clear
-echo
 banner
 
-# Below if-statement to be used by newer OS
-if [ "$UNAME" == "linux" ]
-then
-# If available, use LSB to identify distribution
-export DISTRO=$(lsb_release -i | cut -d: -f2 | sed s/'^\t'//)
-    # Otherwise, use release info file
-    if [ "$DISTRO" == "CentOS" ]
-    then
-        redhat # Runs the redhat function
-    fi
-
-    if [ "$DISTRO" == "Ubuntu" ]
-    then
-	debian # Runs the debian function
-    fi
-
-    if [ "$DISTRO" == "Kali" ]
-     then
-	debian # Runs the debian function
-    fi
-
-    if [ "$DISTRO" == "Parrot" ]
-    then
-	debian # Runs the debian function
-    fi
-
-    if [ "$DISTRO" == "Raspbian" ]
-    then
-        debian # Runs the debian function
-    fi
-    exit
-fi
-# Below if-statement to be used by newer OS
-if [ "$UNAME" == "linux" ]
-then
-# If available, use LSB to identify distribution
-    if [ -f /usr/bin/lsb_release  ]
-    then
-       export DISTRO=$(lsb_release -i | cut -d: -f2 | sed s/'^\t'//)
-	if [ "$DISTRO" == "Raspbian" ]
-	then
-	    debian # Runs the raspbian function
-        fi
-    fi
+if [[ "$UNAME" != "linux" ]]; then
+    echo "This script only supports Linux."
+    exit 1
 fi
 
-#
-# ------------------------------ INSTRUCTIONS -----------------------------------
+DISTRO=$(lsb_release -si 2>/dev/null || echo "Unknown")
 
+case "$DISTRO" in
+    CentOS|RedHatEnterpriseServer|Fedora)
+        redhat
+        ;;
+    Ubuntu|Kali|Parrot|Raspbian|Debian)
+        debian
+        ;;
+    *)
+        echo "Unsupported or unrecognized distribution: $DISTRO"
+        exit 1
+        ;;
+esac
+
+echo -e "\n${GREEN}🎉 System update complete!${NC}"
